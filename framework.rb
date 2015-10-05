@@ -14,12 +14,10 @@ class Test
 
   class << self
 
-    def log(message, no_line_break = false)
+    def log(message)
       if $describing
         message = message.to_s
-        @@html << message
-        @@html << '<br>' unless no_line_break
-
+        @@html << "#{message}\n"
       else
         puts message.to_s
       end
@@ -33,10 +31,10 @@ class Test
         success_msg = "Test Passed"
         success_msg += ": " + options[:success_msg] if options[:success_msg]
 
-        log '<div class="console-passed">' + success_msg + '</div>', true
+        log success_msg
       else
         message ||= "Something is wrong"
-        log "<div class='console-failed'>Test Failed: " + message.to_s + "</div>", true
+        log "Test Failed: " + message.to_s
 
         if $describing
           @@failed << Test::Error.new(message)
@@ -51,13 +49,12 @@ class Test
       log_call(:describe)
       begin
         $describing = true
-        @@html << '<div class="console-describe"><h6>'
-        @@html << message
-        @@html << ':</h6>'
+        @@html << "#{message}:\n"
+        @@html << "---------------------\n"
         yield
+        @@html << "\n"
       ensure
         $describing = false
-        @@html << '</div>'
         puts @@html.join
         @@html.clear
         @@before_blocks.clear
@@ -70,9 +67,7 @@ class Test
     def it(message)
       log_call(:it)
       begin
-        @@html << '<div class="console-it"><h6>'
-        @@html << message
-        @@html << ':</h6>'
+        @@html << "#{message}:\n"
         @@before_blocks.each do |block|
           block.call
         end
@@ -83,8 +78,6 @@ class Test
             block.call
           end
         end
-      ensure
-        @@html << '</div>'
       end
     end
 
@@ -148,7 +141,7 @@ class Test
       log_call(:assert_equals)
       if actual != expected
         msg = msg ? msg + ' -  ' : ''
-        message = "\#{msg}\Expected: " + expected.inspect + ", instead got: " + actual.inspect
+        message = "#{msg}Expected: " + expected.inspect + ", instead got: " + actual.inspect
         Test.expect(false, message)
       else
         options[:success_msg] ||= 'Value == ' + expected.inspect
